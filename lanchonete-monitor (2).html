@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0f0f0f">
+<title>Garage Gourmet — Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f;
+  --bg2: #1a1a1a;
+  --bg3: #242424;
+  --border: rgba(255,255,255,0.08);
+  --red: #e63b2e;
+  --gold: #d4a017;
+  --green: #2ecc71;
+  --yellow: #f39c12;
+  --text: #f0f0f0;
+  --muted: #888;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* NAV */
+.nav { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0; display: flex; overflow-x: auto; scrollbar-width: none; position: sticky; top: 0; z-index: 100; }
+.nav::-webkit-scrollbar { display: none; }
+.nav-btn { flex: none; padding: 14px 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; color: var(--muted); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; text-transform: uppercase; }
+.nav-btn.active { color: var(--red); border-bottom-color: var(--red); }
+
+/* HEADER */
+.header { padding: 20px 16px 12px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.brand { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 0.1em; color: var(--red); }
+.brand span { color: var(--gold); }
+.header-right { text-align: right; }
+.live-dot { display: inline-block; width: 7px; height: 7px; background: var(--green); border-radius: 50%; margin-right: 5px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.live-label { font-size: 11px; color: var(--muted); }
+.date-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* VIEWS */
+.view { display: none; padding: 16px; }
+.view.active { display: block; }
+
+/* METRICS GRID */
+.metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.metric { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.metric-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.metric-value { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.04em; line-height: 1; }
+.metric-sub { font-size: 11px; margin-top: 4px; }
+.up { color: var(--green); }
+.dn { color: var(--red); }
+
+/* SECTION */
+.section { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; }
+.section-head { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.section-body { padding: 12px 14px; }
+
+/* PEDIDOS */
+.pedido-item { display: flex; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+.pedido-item:last-child { border-bottom: none; }
+.ped-num { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--gold); min-width: 44px; }
+.ped-info { flex: 1; min-width: 0; }
+.ped-desc { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ped-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+.b-novo { background: rgba(52,152,219,0.2); color: #5dade2; border: 1px solid rgba(52,152,219,0.3); }
+.b-prep { background: rgba(243,156,18,0.2); color: var(--yellow); border: 1px solid rgba(243,156,18,0.3); }
+.b-pronto { background: rgba(46,204,113,0.15); color: var(--green); border: 1px solid rgba(46,204,113,0.25); }
+.b-entregue { background: rgba(136,136,136,0.15); color: var(--muted); border: 1px solid rgba(136,136,136,0.2); }
+
+/* ESTOQUE */
+.est-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.est-item:last-child { border-bottom: none; }
+.est-name { flex: 1; font-size: 13px; }
+.est-bar-wrap { width: 70px; height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+.est-bar { height: 100%; border-radius: 3px; }
+.est-qty { font-size: 12px; min-width: 38px; text-align: right; font-weight: 500; }
+
+/* FLUXO */
+.fluxo-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.fluxo-row:last-child { border-bottom: none; }
+.fluxo-desc { font-size: 13px; color: var(--muted); }
+.fluxo-val { font-size: 13px; font-weight: 600; }
+.fluxo-total { display: flex; justify-content: space-between; padding: 12px 0 4px; }
+.fluxo-total-label { font-size: 14px; font-weight: 600; }
+.fluxo-total-val { font-size: 18px; font-weight: 600; color: var(--green); font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.04em; }
+
+/* CHART */
+.chart-wrap { position: relative; width: 100%; height: 160px; }
+
+/* FORMS */
+.form-row { margin-bottom: 12px; }
+.form-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; display: block; }
+input[type=text], input[type=number], select, textarea {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); padding: 10px 12px; font-size: 14px; font-family: 'Inter', sans-serif;
+  outline: none; transition: border-color 0.2s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--red); }
+select option { background: var(--bg2); }
+.btn { width: 100%; padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; letter-spacing: 0.04em; transition: opacity 0.2s; }
+.btn:active { opacity: 0.7; }
+.btn-red { background: var(--red); color: #fff; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 8px; }
+.btn-gold { background: var(--gold); color: #0f0f0f; }
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ALERT */
+.alert { background: rgba(230,59,46,0.12); border: 1px solid rgba(230,59,46,0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: #f08080; }
+
+/* RESUMO VENDAS */
+.prod-rank { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.prod-rank:last-child { border-bottom: none; }
+.prod-pos { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--gold); min-width: 24px; }
+.prod-name { flex: 1; font-size: 13px; }
+.prod-qty { font-size: 12px; color: var(--muted); }
+.prod-val { font-size: 13px; font-weight: 600; color: var(--green); }
+
+/* SCROLL BOTTOM PADDING */
+.view { padding-bottom: 32px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">GARAGE<span>.</span></div>
+  <div class="header-right">
+    <div><span class="live-dot"></span><span class="live-label">Sistema ativo</span></div>
+    <div class="date-label" id="data-atual"></div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="irPara('dashboard',this)">Dashboard</button>
+  <button class="nav-btn" onclick="irPara('pedidos',this)">Pedidos</button>
+  <button class="nav-btn" onclick="irPara('estoque',this)">Estoque</button>
+  <button class="nav-btn" onclick="irPara('caixa',this)">Caixa</button>
+  <button class="nav-btn" onclick="irPara('relatorio',this)">Relatório</button>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="view-dashboard" class="view active">
+
+  <div id="alerta-estoque" class="alert" style="display:none"></div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">Faturamento</div>
+      <div class="metric-value" id="d-fat">R$ 0</div>
+      <div class="metric-sub up" id="d-fat-sub">hoje</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Pedidos</div>
+      <div class="metric-value" id="d-ped">0</div>
+      <div class="metric-sub" style="color:var(--muted)" id="d-ped-sub">total</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Ticket médio</div>
+      <div class="metric-value" id="d-ticket">R$ 0</div>
+      <div class="metric-sub" style="color:var(--muted)">por pedido</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Saldo</div>
+      <div class="metric-value up" id="d-saldo">R$ 0</div>
+      <div class="metric-sub" style="color:var(--muted)">líquido</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><span class="section-title">Últimos pedidos</span></div>
+    <div class="section-body" id="dash-pedidos-lista">
+      <div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhum pedido ainda hoje.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><span class="section-title">Estoque crítico</span></div>
+    <div class="section-body" id="dash-estoque-critico">
+      <div style="color:var(--muted);font-size:13px;padding:8px 0">Tudo em ordem.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><span class="section-title">Vendas por hora</span></div>
+    <div class="section-body">
+      <div class="chart-wrap"><canvas id="chartHoras" role="img" aria-label="Vendas por hora">Gráfico de vendas por hora</canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PEDIDOS ===== -->
+<div id="view-pedidos" class="view">
+  <div class="section">
+    <div class="section-head">
+      <span class="section-title">Novo pedido</span>
+    </div>
+    <div class="section-body">
+      <div class="form-row">
+        <label class="form-label">Item(ns)</label>
+        <input type="text" id="ped-item" placeholder="Ex: X-Burguer + Fritas">
+      </div>
+      <div class="input-row">
+        <div class="form-row">
+          <label class="form-label">Valor (R$)</label>
+          <input type="number" id="ped-valor" placeholder="0,00" step="0.01" min="0">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Mesa / nome</label>
+          <input type="text" id="ped-mesa" placeholder="Mesa 3">
+        </div>
+      </div>
+      <button class="btn btn-red" onclick="adicionarPedido()">Registrar pedido</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><span class="section-title">Pedidos de hoje</span>
+      <span id="ped-count-badge" style="font-size:11px;background:var(--red);color:#fff;padding:2px 8px;border-radius:20px">0</span>
+    </div>
+    <div class="section-body" id="pedidos-lista">
+      <div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhum pedido ainda.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ESTOQUE ===== -->
+<div id="view-estoque" class="view">
+  <div class="section">
+    <div class="section-head"><span class="section-title">Adicionar / atualizar item</span></div>
+    <div class="section-body">
+      <div class="form-row">
+        <label class="form-label">Produto</label>
+        <input type="text" id="est-nome" placeholder="Ex: Pão brioche">
+      </div>
+      <div class="input-row">
+        <div class="form-row">
+          <label class="form-label">Quantidade</label>
+          <input type="number" id="est-qtd" placeholder="0" min="0">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Unidade</label>
+          <input type="text" id="est-unidade" placeholder="un / kg / g">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Alerta quando menor que</label>
+        <input type="number" id="est-alerta" placeholder="Ex: 10" min="0">
+      </div>
+      <button class="btn btn-gold" onclick="salvarEstoque()">Salvar item</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><span class="section-title">Estoque atual</span></div>
+    <div class="section-body" id="estoque-lista">
+      <div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhum item cadastrado.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CAIXA ===== -->
+<div id="view-caixa" class="view">
+  <div class="section">
+    <div class="section-head"><span class="section-title">Lançar custo / saída</span></div>
+    <div class="section-body">
+      <div class="form-row">
+        <label class="form-label">Descrição</label>
+        <input type="text" id="cx-desc" placeholder="Ex: Compra de insumos">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Valor (R$)</label>
+        <input type="number" id="cx-valor" placeholder="0,00" step="0.01" min="0">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Categoria</label>
+        <select id="cx-cat">
+          <option value="insumos">Insumos / estoque</option>
+          <option value="pessoal">Mão de obra</option>
+          <option value="fixo">Custo fixo</option>
+          <option value="outros">Outros</option>
+        </select>
+      </div>
+      <button class="btn btn-red" onclick="lancarCusto()">Lançar saída</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><span class="section-title">Fluxo de caixa — hoje</span></div>
+    <div class="section-body">
+      <div id="fluxo-lista">
+        <div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhum lançamento ainda.</div>
+      </div>
+      <div style="border-top:1px solid var(--border);margin-top:4px">
+        <div class="fluxo-total">
+          <span class="fluxo-total-label">Entradas</span>
+          <span style="font-size:14px;font-weight:600;color:var(--green)" id="cx-entradas">R$ 0,00</span>
+        </div>
+        <div class="fluxo-total">
+          <span class="fluxo-total-label">Saídas</span>
+          <span style="font-size:14px;font-weight:600;color:var(--red)" id="cx-saidas">R$ 0,00</span>
+        </div>
+        <div class="fluxo-total" style="border-top:1px solid var(--border);padding-top:12px">
+          <span class="fluxo-total-label">Saldo líquido</span>
+          <span class="fluxo-total-val" id="cx-saldo">R$ 0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RELATÓRIO ===== -->
+<div id="view-relatorio" class="view">
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">Total pedidos</div>
+      <div class="metric-value" id="rel-total-ped">0</div>
+      <div class="metric-sub" style="color:var(--muted)">registros</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Faturamento</div>
+      <div class="metric-value" id="rel-fat">R$ 0</div>
+      <div class="metric-sub up">acumulado</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><span class="section-title">Mais vendidos</span></div>
+    <div class="section-body" id="mais-vendidos">
+      <div style="color:var(--muted);font-size:13px;padding:8px 0">Sem dados ainda.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><span class="section-title">Histórico de pedidos</span></div>
+    <div class="section-body" id="historico-lista">
+      <div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhum registro.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px">
+    <button class="btn btn-ghost" onclick="if(confirm('Zerar todos os dados?'))limparDados()">Zerar dados do dia</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+var STORE_KEY = 'gg_dados';
+var estado = {
+  pedidos: [],
+  estoque: [],
+  custos: [],
+  pedidoNum: 1
+};
+
+function carregar() {
+  try {
+    var s = localStorage.getItem(STORE_KEY);
+    if (s) {
+      var d = JSON.parse(s);
+      estado.pedidos = d.pedidos || [];
+      estado.estoque = d.estoque || [];
+      estado.custos = d.custos || [];
+      estado.pedidoNum = d.pedidoNum || 1;
+    }
+  } catch(e) {}
+}
+
+function salvar() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(estado)); } catch(e) {}
+}
+
+function fmt(v) {
+  return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtShort(v) {
+  v = parseFloat(v);
+  if (v >= 1000) return 'R$ ' + (v/1000).toFixed(1) + 'k';
+  return 'R$ ' + Math.round(v);
+}
+function horaAtual() {
+  return new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+}
+
+function irPara(id, btn) {
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('view-'+id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'pedidos') renderPedidos();
+  if (id === 'estoque') renderEstoque();
+  if (id === 'caixa') renderCaixa();
+  if (id === 'relatorio') renderRelatorio();
+}
+
+function adicionarPedido() {
+  var item = document.getElementById('ped-item').value.trim();
+  var valor = parseFloat(document.getElementById('ped-valor').value) || 0;
+  var mesa = document.getElementById('ped-mesa').value.trim();
+  if (!item) { alert('Informe o item do pedido'); return; }
+  if (valor <= 0) { alert('Informe um valor válido'); return; }
+  var ped = {
+    num: estado.pedidoNum++,
+    item: item,
+    valor: valor,
+    mesa: mesa || '—',
+    hora: horaAtual(),
+    status: 'novo',
+    ts: Date.now()
+  };
+  estado.pedidos.unshift(ped);
+  salvar();
+  document.getElementById('ped-item').value = '';
+  document.getElementById('ped-valor').value = '';
+  document.getElementById('ped-mesa').value = '';
+  renderPedidos();
+  renderDashboard();
+}
+
+function mudarStatus(num) {
+  var seq = ['novo','preparo','pronto','entregue'];
+  var ped = estado.pedidos.find(function(p){ return p.num === num; });
+  if (!ped) return;
+  var idx = seq.indexOf(ped.status);
+  if (idx < seq.length - 1) ped.status = seq[idx+1];
+  salvar();
+  renderPedidos();
+  renderDashboard();
+}
+
+function renderPedidos() {
+  var lista = document.getElementById('pedidos-lista');
+  var badge = document.getElementById('ped-count-badge');
+  badge.textContent = estado.pedidos.length;
+  if (!estado.pedidos.length) {
+    lista.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhum pedido ainda.</div>';
+    return;
+  }
+  lista.innerHTML = estado.pedidos.map(function(p) {
+    var bc = {novo:'b-novo',preparo:'b-prep',pronto:'b-pronto',entregue:'b-entregue'}[p.status];
+    var label = {novo:'Novo',preparo:'Preparo',pronto:'Pronto',entregue:'Entregue'}[p.status];
+    return '<div class="pedido-item" onclick="mudarStatus('+p.num+')" style="cursor:pointer">' +
+      '<span class="ped-num">#'+String(p.num).padStart(3,'0')+'</span>' +
+      '<div class="ped-info"><div class="ped-desc">'+p.item+'</div>' +
+      '<div class="ped-time">'+p.mesa+' · '+p.hora+'</div></div>' +
+      '<div style="text-align:right"><span class="badge '+bc+'">'+label+'</span>' +
+      '<div style="font-size:12px;color:var(--gold);font-weight:600;margin-top:3px">'+fmt(p.valor)+'</div></div>' +
+      '</div>';
+  }).join('');
+}
+
+function salvarEstoque() {
+  var nome = document.getElementById('est-nome').value.trim();
+  var qtd = parseFloat(document.getElementById('est-qtd').value) || 0;
+  var unidade = document.getElementById('est-unidade').value.trim() || 'un';
+  var alerta = parseFloat(document.getElementById('est-alerta').value) || 0;
+  if (!nome) { alert('Informe o nome do produto'); return; }
+  var idx = estado.estoque.findIndex(function(e){ return e.nome.toLowerCase() === nome.toLowerCase(); });
+  if (idx >= 0) {
+    estado.estoque[idx].qtd = qtd;
+    estado.estoque[idx].unidade = unidade;
+    estado.estoque[idx].alerta = alerta;
+  } else {
+    estado.estoque.push({ nome: nome, qtd: qtd, unidade: unidade, alerta: alerta });
+  }
+  salvar();
+  document.getElementById('est-nome').value = '';
+  document.getElementById('est-qtd').value = '';
+  document.getElementById('est-unidade').value = '';
+  document.getElementById('est-alerta').value = '';
+  renderEstoque();
+  renderDashboard();
+}
+
+function removerEstoque(idx) {
+  if (confirm('Remover '+estado.estoque[idx].nome+'?')) {
+    estado.estoque.splice(idx,1);
+    salvar();
+    renderEstoque();
+    renderDashboard();
+  }
+}
+
+function renderEstoque() {
+  var lista = document.getElementById('estoque-lista');
+  if (!estado.estoque.length) {
+    lista.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhum item cadastrado.</div>';
+    return;
+  }
+  lista.innerHTML = estado.estoque.map(function(e, idx) {
+    var max = Math.max(e.qtd, e.alerta * 3, 1);
+    var pct = Math.min(100, Math.round((e.qtd / max) * 100));
+    var cor = e.alerta > 0 && e.qtd <= e.alerta ? '#e63b2e' : e.alerta > 0 && e.qtd <= e.alerta * 2 ? '#f39c12' : '#2ecc71';
+    var qtdCor = e.alerta > 0 && e.qtd <= e.alerta ? 'color:#f08080' : 'color:var(--muted)';
+    return '<div class="est-item">' +
+      '<span class="est-name">'+e.nome+'</span>' +
+      '<div class="est-bar-wrap"><div class="est-bar" style="width:'+pct+'%;background:'+cor+'"></div></div>' +
+      '<span class="est-qty" style="'+qtdCor+'">'+e.qtd+' '+e.unidade+'</span>' +
+      '<span onclick="removerEstoque('+idx+')" style="cursor:pointer;color:var(--muted);font-size:16px;padding-left:8px">×</span>' +
+      '</div>';
+  }).join('');
+}
+
+function lancarCusto() {
+  var desc = document.getElementById('cx-desc').value.trim();
+  var valor = parseFloat(document.getElementById('cx-valor').value) || 0;
+  var cat = document.getElementById('cx-cat').value;
+  if (!desc) { alert('Informe a descrição'); return; }
+  if (valor <= 0) { alert('Informe um valor válido'); return; }
+  estado.custos.unshift({ desc: desc, valor: valor, cat: cat, hora: horaAtual(), ts: Date.now() });
+  salvar();
+  document.getElementById('cx-desc').value = '';
+  document.getElementById('cx-valor').value = '';
+  renderCaixa();
+  renderDashboard();
+}
+
+function renderCaixa() {
+  var lista = document.getElementById('fluxo-lista');
+  var entradas = estado.pedidos.reduce(function(s,p){ return s + p.valor; }, 0);
+  var saidas = estado.custos.reduce(function(s,c){ return s + c.valor; }, 0);
+  document.getElementById('cx-entradas').textContent = fmt(entradas);
+  document.getElementById('cx-saidas').textContent = fmt(saidas);
+  var saldo = entradas - saidas;
+  var el = document.getElementById('cx-saldo');
+  el.textContent = fmt(saldo);
+  el.style.color = saldo >= 0 ? 'var(--green)' : 'var(--red)';
+  if (!estado.custos.length) {
+    lista.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhum lançamento ainda.</div>';
+    return;
+  }
+  var cats = {insumos:'Insumos',pessoal:'Mão de obra',fixo:'Custo fixo',outros:'Outros'};
+  lista.innerHTML = estado.custos.map(function(c) {
+    return '<div class="fluxo-row"><div><div class="fluxo-desc">'+c.desc+'</div>' +
+      '<div style="font-size:11px;color:var(--muted)">'+cats[c.cat]+' · '+c.hora+'</div></div>' +
+      '<span class="fluxo-val dn">- '+fmt(c.valor)+'</span></div>';
+  }).join('');
+}
+
+var chartHoras = null;
+function renderDashboard() {
+  var fat = estado.pedidos.reduce(function(s,p){ return s + p.valor; }, 0);
+  var saidas = estado.custos.reduce(function(s,c){ return s + c.valor; }, 0);
+  var saldo = fat - saidas;
+  var ticket = estado.pedidos.length ? fat / estado.pedidos.length : 0;
+  document.getElementById('d-fat').textContent = fmtShort(fat);
+  document.getElementById('d-ped').textContent = estado.pedidos.length;
+  document.getElementById('d-ped-sub').textContent = estado.pedidos.length === 1 ? 'pedido' : 'pedidos';
+  document.getElementById('d-ticket').textContent = fmtShort(ticket);
+  document.getElementById('d-saldo').textContent = fmtShort(saldo);
+  document.getElementById('d-saldo').className = 'metric-value ' + (saldo >= 0 ? 'up' : 'dn');
+
+  var lista = document.getElementById('dash-pedidos-lista');
+  var ultimos = estado.pedidos.slice(0,4);
+  if (!ultimos.length) {
+    lista.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhum pedido ainda hoje.</div>';
+  } else {
+    lista.innerHTML = ultimos.map(function(p) {
+      var bc = {novo:'b-novo',preparo:'b-prep',pronto:'b-pronto',entregue:'b-entregue'}[p.status];
+      var label = {novo:'Novo',preparo:'Preparo',pronto:'Pronto',entregue:'Entregue'}[p.status];
+      return '<div class="pedido-item">' +
+        '<span class="ped-num">#'+String(p.num).padStart(3,'0')+'</span>' +
+        '<div class="ped-info"><div class="ped-desc">'+p.item+'</div><div class="ped-time">'+p.hora+'</div></div>' +
+        '<span class="badge '+bc+'">'+label+'</span></div>';
+    }).join('');
+  }
+
+  var criticos = estado.estoque.filter(function(e){ return e.alerta > 0 && e.qtd <= e.alerta; });
+  var alertaEl = document.getElementById('alerta-estoque');
+  if (criticos.length) {
+    alertaEl.style.display = 'block';
+    alertaEl.textContent = 'Estoque critico: ' + criticos.map(function(e){ return e.nome + ' (' + e.qtd + ' ' + e.unidade + ')'; }).join(', ');
+  } else {
+    alertaEl.style.display = 'none';
+  }
+
+  var estCritico = document.getElementById('dash-estoque-critico');
+  var todos_low = estado.estoque.filter(function(e){ return e.alerta > 0 && e.qtd <= e.alerta * 2; });
+  if (!todos_low.length) {
+    estCritico.innerHTML = '<div style="color:var(--green);font-size:13px;padding:8px 0">Tudo em ordem.</div>';
+  } else {
+    estCritico.innerHTML = todos_low.map(function(e) {
+      var max = Math.max(e.qtd, e.alerta * 3, 1);
+      var pct = Math.min(100, Math.round((e.qtd / max) * 100));
+      var cor = e.qtd <= e.alerta ? '#e63b2e' : '#f39c12';
+      return '<div class="est-item"><span class="est-name">'+e.nome+'</span>' +
+        '<div class="est-bar-wrap"><div class="est-bar" style="width:'+pct+'%;background:'+cor+'"></div></div>' +
+        '<span class="est-qty" style="color:'+cor+'">'+e.qtd+' '+e.unidade+'</span></div>';
+    }).join('');
+  }
+
+  var horas = ['10','11','12','13','14','15','16','17','18','19','20','21'];
+  var vendPorHora = horas.map(function(h) {
+    return estado.pedidos.filter(function(p) {
+      return p.hora && p.hora.startsWith(h+':');
+    }).reduce(function(s,p){ return s + p.valor; }, 0);
+  });
+
+  var canvas = document.getElementById('chartHoras');
+  if (chartHoras) { chartHoras.destroy(); }
+  chartHoras = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: horas.map(function(h){ return h+'h'; }),
+      datasets: [{
+        label: 'Vendas',
+        data: vendPorHora,
+        backgroundColor: '#e63b2e',
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#666', font: { size: 10 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#666', font: { size: 10 }, callback: function(v){ return 'R$'+Math.round(v); } }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function renderRelatorio() {
+  var fat = estado.pedidos.reduce(function(s,p){ return s + p.valor; }, 0);
+  document.getElementById('rel-total-ped').textContent = estado.pedidos.length;
+  document.getElementById('rel-fat').textContent = fmtShort(fat);
+
+  var contagem = {};
+  estado.pedidos.forEach(function(p) {
+    var k = p.item.trim();
+    if (!contagem[k]) contagem[k] = { qtd: 0, total: 0 };
+    contagem[k].qtd++;
+    contagem[k].total += p.valor;
+  });
+  var ranking = Object.keys(contagem).map(function(k){ return { nome: k, qtd: contagem[k].qtd, total: contagem[k].total }; })
+    .sort(function(a,b){ return b.qtd - a.qtd; }).slice(0,5);
+
+  var mv = document.getElementById('mais-vendidos');
+  if (!ranking.length) {
+    mv.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">Sem dados ainda.</div>';
+  } else {
+    mv.innerHTML = ranking.map(function(r, i) {
+      return '<div class="prod-rank"><span class="prod-pos">'+(i+1)+'</span>' +
+        '<span class="prod-name">'+r.nome+'</span>' +
+        '<span class="prod-qty">'+r.qtd+'x</span>' +
+        '<span class="prod-val">'+fmt(r.total)+'</span></div>';
+    }).join('');
+  }
+
+  var hist = document.getElementById('historico-lista');
+  if (!estado.pedidos.length) {
+    hist.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">Nenhum registro.</div>';
+  } else {
+    hist.innerHTML = estado.pedidos.map(function(p) {
+      var bc = {novo:'b-novo',preparo:'b-prep',pronto:'b-pronto',entregue:'b-entregue'}[p.status];
+      var label = {novo:'Novo',preparo:'Preparo',pronto:'Pronto',entregue:'Entregue'}[p.status];
+      return '<div class="pedido-item"><span class="ped-num">#'+String(p.num).padStart(3,'0')+'</span>' +
+        '<div class="ped-info"><div class="ped-desc">'+p.item+'</div>' +
+        '<div class="ped-time">'+p.mesa+' · '+p.hora+'</div></div>' +
+        '<div style="text-align:right"><span class="badge '+bc+'">'+label+'</span>' +
+        '<div style="font-size:12px;color:var(--gold);font-weight:600;margin-top:3px">'+fmt(p.valor)+'</div></div></div>';
+    }).join('');
+  }
+}
+
+function limparDados() {
+  estado.pedidos = [];
+  estado.custos = [];
+  estado.pedidoNum = 1;
+  salvar();
+  renderDashboard();
+  renderRelatorio();
+  renderCaixa();
+}
+
+function atualizarData() {
+  var d = new Date();
+  document.getElementById('data-atual').textContent = d.toLocaleDateString('pt-BR', {weekday:'short',day:'2-digit',month:'short'});
+}
+
+carregar();
+atualizarData();
+renderDashboard();
+setInterval(atualizarData, 60000);
+</script>
+</body>
+</html>
